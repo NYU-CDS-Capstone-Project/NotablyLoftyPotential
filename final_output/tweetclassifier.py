@@ -80,8 +80,6 @@ class classifytweet:
         # cleanup the unzipped files
         for f in fnames:
             os.remove(self.model_files + f)
-            
-        return "All modeling information loaded"
 
     def prepare_tweet(self, tweet):
         """
@@ -112,7 +110,7 @@ class classifytweet:
         stemmed = [d for d in self.stemmed if d not in stop]
         self.phrased = list(self.phraser[[stemmed]])[0]
 
-        print('Phrased representation: "' + ' '.join(self.phrased) + '"')
+        #print('Phrased representation: "' + ' '.join(self.phrased) + '"')
         #return None
     
     def get_valence_score(self):
