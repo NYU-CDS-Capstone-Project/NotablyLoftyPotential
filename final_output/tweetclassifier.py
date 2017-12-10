@@ -205,8 +205,8 @@ class classifytweet:
         Uses the results of each of the index measures to create one score.
         .20 outrage dict
         .15 expanded outrage dict
-        .15 valence
-        .13 arousal
+        .15 arousal
+        .13 valence
         .11 sentiment
         .10 emoji
         .08 topic valence
@@ -222,8 +222,8 @@ class classifytweet:
         scores = np.array([
             self.get_base_outrage_count(),
             self.get_expanded_outrage_count(),
-            self.get_valence_score(),
             self.get_arousal_score(),
+            self.get_valence_score(),
             self.get_sentiment_score(),
             self.get_emoji_count(),
             topic_valence_score,
