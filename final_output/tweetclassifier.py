@@ -191,11 +191,13 @@ class classifytweet:
         Get the number of outrage words in the tweet.
         """
         outrage = set(self.stemmed) & set(self.exp_outrage_list)
+        self.expanded_outrage_count = len(outrage)
+        '''
         self.expanded_outrage_count = 0
         for i in self.stemmed:
             if i in (self.exp_outrage_list):
                 self.expanded_outrage_count += 1
-
+'''
         return self.expanded_outrage_count
 
     def get_outrage_score(self):
