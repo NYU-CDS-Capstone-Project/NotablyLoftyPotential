@@ -95,12 +95,11 @@ class classifytweet:
         except:
             #tweet_tokenized = [y.encode("utf-8") for y in tweet_tokenized]
             self.stemmed = [stemmer.stem(y) for y in self.tweet_tokenized]
-        #self.stemmed = filter('', self.stemmed)
-        #self.processed = ''.join(self.stemmed)
+        
         #self.text_bigrams = [' '.join(self.stemmed[i:]) for i in range(2)]
-        self.text_bigrams=list(bigrams(self.stemmed))
-        self.text_bigrams=["%s %s" % x for x in self.text_bigrams]
-        self.text_bigrams.extend(self.stemmed)
+        #self.text_bigrams=list(bigrams(self.stemmed))
+        #self.text_bigrams=["%s %s" % x for x in self.text_bigrams]
+        #self.text_bigrams.extend(self.stemmed)
 
         keep = set(['!','?'])
         stop = set(stopwords.words('english'))
@@ -128,7 +127,10 @@ class classifytweet:
             sd_ratio[sd == 0] = 0
         sd_weight = sd_ratio / np.sum(sd_ratio)
         
-        self.valence_score = np.sum(mean*sd_weight)
+        if np.sum(mean*sd_weight) == np.nan:
+            self.valence_score = 0
+        else:
+            self.valence_score = np.sum(mean*sd_weight)
         
         return self.valence_score
 
@@ -147,7 +149,10 @@ class classifytweet:
             sd_ratio[sd == 0] = 0
         sd_weight = sd_ratio / np.sum(sd_ratio)
         
-        self.arousal_score = np.sum(mean*sd_weight)
+        if np.sum(mean*sd_weight) == np.nan:
+            self.arousal_score = 0
+        else:
+            self.arousal_score = np.sum(mean*sd_weight)
         
         return self.arousal_score
 
@@ -155,7 +160,7 @@ class classifytweet:
         """
         Weights the posititive/negative sentiment of the tweet.
         """
-        vectorized = self.nb_vectorizer.transform(self.text_bigrams)
+        vectorized = self.nb_vectorizer.transform(self.stemmed)
         self.sentiment_score = np.average(1 - self.nb_model.predict_proba(vectorized)[:,1])
 
         return self.sentiment_score
@@ -181,21 +186,18 @@ class classifytweet:
         """
         Get the number of outrage words in the tweet.
         """
-        self.base_outrage_count = len(set(self.stemmed) & set(self.outrage_list))
+        self.base_outrage_count = 0
+        for i in self.stemmed:
+            self.base_outrage_count += len(set(i) & set(self.outrage_list))
         return self.base_outrage_count
 
     def get_expanded_outrage_count(self):
         """
         Get the number of outrage words in the tweet.
         """
-        outrage = set(self.stemmed) & set(self.exp_outrage_list)
-        self.expanded_outrage_count = len(outrage)
-        '''
         self.expanded_outrage_count = 0
         for i in self.stemmed:
-            if i in (self.exp_outrage_list):
-                self.expanded_outrage_count += 1
-'''
+            self.expanded_outrage_count += len(set(i) & set(self.exp_outrage_list))
         return self.expanded_outrage_count
 
     def get_outrage_score(self):
