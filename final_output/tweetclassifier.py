@@ -26,7 +26,7 @@ class classifytweet:
         self.n = len(self.dictionary.items())
         self.word_map = {v:k for k,v in self.dictionary.items()}
         print("Model items loaded and classifier initialized!")
-        
+
     def load_model(self):
         """
         Loads the model, corpus, and dictionary.
@@ -47,13 +47,13 @@ class classifytweet:
         self.phraser = phrases.Phrases.load(self.model_files + 'document_phraser.pkl')
         for f in ['unigrams_dictionary.pkl', 'unigrams_corpus.mm', 'unigrams_corpus.mm.index', 'NB_vectorizer.pkl', 'NB_sentiment_model.pkl']:
             fnames.append(f)
-        
+
         # load the valence and arousal arrays
         self.valence_mean = pickle.load(open(self.model_files + 'valence_mean.pkl', 'rb'))
         self.arousal_mean = pickle.load(open(self.model_files + 'arousal_mean.pkl', 'rb'))
         self.valence_sd = pickle.load(open(self.model_files + 'valence_sd.pkl', 'rb'))
         self.arousal_sd = pickle.load(open(self.model_files + 'arousal_sd.pkl', 'rb'))
-        
+
         # load the MinMaxScaler for the transforming the scores
         self.base_outrage_scaler = None
         self.expanded_outrage_scaler = None
@@ -62,7 +62,7 @@ class classifytweet:
         self.emoji_scaler = None
         self.topic_valence_scaler = pickle.load(open(self.model_files + 'topic_valence_scaled.pkl', 'rb'))
         self.topic_arousal_scaler = pickle.load(open(self.model_files + 'topic_arousal_scaled.pkl', 'rb'))
-        
+
         # load the Naive Bayes sentiment model
         try:
             self.nb_model = pickle.load(open(self.model_files + 'NB_sentiment_model.pkl', 'rb'))
@@ -72,7 +72,7 @@ class classifytweet:
             self.nb_vectorizer = pickle.load(open(self.model_files + 'NB_vectorizer.pkl', 'rb'))
         except:
             self.nb_vectorizer = pickle.load(open(self.model_files + 'NB_vectorizer.pkl', 'rb'), encoding='latin1')
-        
+
         # load the outrage dictionaries
         self.outrage_list = pd.read_csv(self.model_files + 'outrage_dictionary_stemmed.csv', header=None)
         self.exp_outrage_list = pd.read_csv(self.model_files + 'expanded_outrage_dictionary_stemmed.csv', header=None)
@@ -95,7 +95,7 @@ class classifytweet:
         except:
             #tweet_tokenized = [y.encode("utf-8") for y in tweet_tokenized]
             self.stemmed = [stemmer.stem(y) for y in self.tweet_tokenized]
-        
+
         #self.text_bigrams = [' '.join(self.stemmed[i:]) for i in range(2)]
         #self.text_bigrams=list(bigrams(self.stemmed))
         #self.text_bigrams=["%s %s" % x for x in self.text_bigrams]
@@ -111,7 +111,7 @@ class classifytweet:
 
         #print('Phrased representation: "' + ' '.join(self.phrased) + '"')
         #return None
-    
+
     def get_valence_score(self):
         """
         Creates the valence and arousal score for the tweet.
@@ -126,12 +126,12 @@ class classifytweet:
             sd_ratio = total_sd / sd
             sd_ratio[sd == 0] = 0
         sd_weight = sd_ratio / np.sum(sd_ratio)
-        
+
         if np.sum(mean*sd_weight) == np.nan:
             self.valence_score = 0
         else:
             self.valence_score = np.sum(mean*sd_weight)
-        
+
         return self.valence_score
 
     def get_arousal_score(self):
@@ -148,12 +148,12 @@ class classifytweet:
             sd_ratio = total_sd / sd
             sd_ratio[sd == 0] = 0
         sd_weight = sd_ratio / np.sum(sd_ratio)
-        
+
         if np.sum(mean*sd_weight) == np.nan:
             self.arousal_score = 0
         else:
             self.arousal_score = np.sum(mean*sd_weight)
-        
+
         return self.arousal_score
 
     def get_sentiment_score(self):
@@ -175,10 +175,11 @@ class classifytweet:
         """
         Count the Mad! faces.
         """
-        positives = ['<U+0082>', '<U+008D>']
-        outrage = ['<U+00A0>', '<U+00A1>', '<U+00A4>', '<U+00A9>']
-        positive_score = sum([y in positives for y in self.tweet_tokenized])
-        outrage_score = sum([y in outrage for y in self.tweet_tokenized])
+        positives = ['\<f0\>\<U\+009F\>\<U\+0099\>\<U\+0082\>']
+        outrage = ['\<f0\>\<U\+009F\>\<U\+0098\>\<U\+00A4\>', '\<f0\>\<U\+009F\>\<U\+0098\>\<U\+00A0\>', \
+                '\<f0\>\<U\+009F\>\<U\+0098\>\<U\+00A1\>']
+        positive_score= self.tweet.str.contains('|'.join(positives)).astype(int)
+        outrage_score= self.tweet.str.contains('|'.join(outrage)).astype(int)
         self.emoji_count = outrage_score-positive_score
         return self.emoji_count
 
@@ -203,14 +204,14 @@ class classifytweet:
     def get_outrage_score(self):
         """
         Uses the results of each of the index measures to create one score.
-        .20 outrage dict
-        .15 expanded outrage dict
-        .15 arousal
-        .13 valence
+        .12 outrage dict
+        .10 expanded outrage dict
+        .14 arousal
+        .14 valence
         .11 sentiment
         .10 emoji
-        .08 topic valence
-        .08 topic arousal
+        .15 topic valence
+        .14 topic arousal
         """
         self.topics = self.get_topics()
         topic_valence_score = 0
@@ -218,7 +219,7 @@ class classifytweet:
         for tup in self.topics:
             topic_valence_score += self.topic_valence_scaler[tup[0]] * tup[1]
             topic_arousal_score += self.topic_valence_scaler[tup[0]] * tup[1]
-            
+
         scores = np.array([
             self.get_base_outrage_count(),
             self.get_expanded_outrage_count(),
@@ -229,7 +230,7 @@ class classifytweet:
             topic_valence_score,
             topic_arousal_score
             ])
-        weights = np.array([0.2, 0.15, 0.15, 0.13, 0.11, 0.10, 0.08, 0.08])
+        weights = np.array([0.12, 0.10, 0.14, 0.14, 0.11, 0.10, 0.15, 0.14])
 
         self.outrage_meter = np.sum(scores*weights)
         return self.outrage_meter
