@@ -204,14 +204,14 @@ class classifytweet:
     def get_outrage_score(self):
         """
         Uses the results of each of the index measures to create one score.
-        .12 outrage dict
-        .10 expanded outrage dict
-        .14 arousal
-        .14 valence
-        .11 sentiment
-        .10 emoji
-        .15 topic valence
-        .14 topic arousal
+        0.16: (1 - df.scaled_topic_valence)
+        0.16: df.scaled_topic_arousal
+        0.15: (1 - df.scaled_valence)
+        0.14: df.scaled_arousal
+        0.14: df.scaled_outrage_words
+        0.13: df.negative_sentiment_prob
+        0.12: df.scaled_ext_outrage_words
+        0.00: df.net_emo_outrage
         """
         self.topics = self.get_topics()
         topic_valence_score = 0
@@ -224,13 +224,13 @@ class classifytweet:
             self.get_base_outrage_count(),
             self.get_expanded_outrage_count(),
             self.get_arousal_score(),
-            self.get_valence_score(),
+            (1 - self.get_valence_score()),
             self.get_sentiment_score(),
             self.get_emoji_count(),
-            topic_valence_score,
+            (1 - topic_valence_score),
             topic_arousal_score
             ])
-        weights = np.array([0.12, 0.10, 0.14, 0.14, 0.11, 0.10, 0.15, 0.14])
+        weights = np.array([0.14, 0.12, 0.14, 0.15, 0.13, 0.00, 0.16, 0.16])
 
         self.outrage_meter = np.sum(scores*weights)
         return self.outrage_meter
